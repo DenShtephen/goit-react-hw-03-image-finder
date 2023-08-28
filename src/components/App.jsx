@@ -1,10 +1,10 @@
 import { Component } from 'react';
-import axios from 'axios';
 import { SearchBar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Loader } from './Loader/Loader';
 import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
+import { fetchImages } from './Services/Services';
 import '../styles.css';
 
 export class App extends Component {
@@ -13,31 +13,30 @@ export class App extends Component {
     query: '',
     page: 1,
     largeImageUrl: '',
+    totalHits: 0,
     showModal: false,
     isLoading: false,
   };
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevState.query !== this.state.query) {
+    if (
+      prevState.query !== this.state.query ||
+      prevState.page !== this.state.page
+    ) {
       this.fetchImages();
     }
   }
 
   fetchImages = () => {
     const { query, page } = this.state;
-    const apiKey = '38630454-b1080283bd37eb37a5f5742ac';
-    const perPage = 12;
 
     this.setState({ isLoading: true });
 
-    axios
-      .get(
-        `https://pixabay.com/api/?q=${query}&page=${page}&key=${apiKey}&image_type=photo&orientation=horizontal&per_page=${perPage}`
-      )
+    fetchImages(query, page)
       .then(response => {
         this.setState(prevState => ({
           images: [...prevState.images, ...response.data.hits],
-          page: prevState.page + 1,
+          totalHits: response.data.totalHits,
         }));
       })
       .catch(error => console.error('Error fetching images:', error))
@@ -64,9 +63,11 @@ export class App extends Component {
         <SearchBar onSubmit={this.handleSearchSubmit} />
         <ImageGallery images={images} onItemClick={this.handleImageClick} />
         {isLoading && <Loader />}
-        {images.length > 0 && !isLoading && (
-          <Button onClick={this.fetchImages}>Load more</Button>
-        )}
+        {!isLoading &&
+          images.length % 12 === 0 &&
+          this.state.page <= Math.ceil(this.state.totalHits / 12) && (
+            <Button onClick={this.fetchImages}>Load more</Button>
+          )}
         {showModal && (
           <Modal
             onClose={this.handleCloseModal}
