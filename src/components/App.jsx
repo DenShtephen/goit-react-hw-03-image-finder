@@ -43,6 +43,12 @@ export class App extends Component {
       .finally(() => this.setState({ isLoading: false }));
   };
 
+  handleLoadMore = () => {
+    this.setState(prevState => ({
+      page: prevState.page + 1,
+    }));
+  };
+
   handleSearchSubmit = query => {
     this.setState({ query, page: 1, images: [] });
   };
@@ -66,7 +72,7 @@ export class App extends Component {
         {!isLoading &&
           images.length % 12 === 0 &&
           this.state.page <= Math.ceil(this.state.totalHits / 12) && (
-            <Button onClick={this.fetchImages}>Load more</Button>
+            <Button onClick={this.handleLoadMore}>Load more</Button>
           )}
         {showModal && (
           <Modal
